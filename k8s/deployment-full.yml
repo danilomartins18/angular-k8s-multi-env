@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: env-poc
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-k8s-env-poc
+  namespace: env-poc
+data:
+  env.js: |
+    window.__env = {
+      name: 'K8S'
+    }
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-env-poc
+  namespace: env-poc
+  labels:
+    app: k8s-env-poc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-env-poc
+  template:
+    metadata:
+      labels:
+        app: k8s-env-poc
+    spec:
+      volumes:
+      - name: config-volume
+        configMap:
+          name: cm-k8s-env-poc
+      containers:
+      - name: k8s-env-poc
+        image: app-k8s-env-poc
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/share/nginx/html/env.js
+          subPath: env.js
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+
+    
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-k8s-env-poc
+  namespace: env-poc
+spec:
+  selector:
+    app: k8s-env-poc
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  type: ClusterIP
