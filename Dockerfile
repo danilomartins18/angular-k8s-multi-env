@@ -11,13 +11,13 @@ RUN npm run build
 # production environment
 FROM nginx:alpine
 
-# RUN apt-get install bash
-COPY nginx/default.conf /etc/nginx/conf.d/.
-COPY nginx/gzip.conf /etc/nginx/conf.d/.
-COPY nginx/nginx.conf /etc/nginx/
-
 # RUN rm -rf /usr/share/nginx/html/*
 COPY --from=build /app/dist/angular-k8s-multi-env/browser /usr/share/nginx/html
+
+# RUN apt-get install bash
+COPY --from=build /app/nginx/nginx.conf /etc/nginx/
+COPY --from=build /app/nginx/default.conf /etc/nginx/conf.d/
+
 
 EXPOSE 80
 
